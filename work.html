@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work — Melius Illuminare</title>
+<meta name="description" content="Read a public-domain theological work. Sectioned like a book, with stable citations and deep links.">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .work-app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    max-width: 1140px;
+    margin: 0 auto;
+    min-height: calc(100vh - 140px);
+  }
+  @media (max-width: 900px) {
+    .work-app { grid-template-columns: 1fr; }
+    .work-side { display: none; }
+    .work-side.open {
+      display: block; position: fixed; inset: 0; z-index: 90;
+      background: var(--bg-deep); overflow-y: auto; padding: 1.25rem;
+    }
+  }
+  .work-side {
+    border-right: 1px solid var(--hairline);
+    background: var(--bg-deep);
+    padding: 1.1rem 0.85rem 2rem;
+    position: sticky;
+    top: 70px;
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+  }
+  .work-side h3 {
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold-glow);
+    margin: 1rem 0 0.5rem;
+  }
+  .work-side h3:first-child { margin-top: 0.2rem; }
+
+  .toc-group { margin-bottom: 0.35rem; }
+  .toc-group-btn {
+    display: flex; align-items: center; gap: 0.35rem;
+    width: 100%; text-align: left;
+    background: transparent; border: none;
+    color: var(--ink); font-family: var(--serif-body);
+    font-size: 0.92rem; padding: 0.35rem 0.4rem;
+    border-radius: 3px; cursor: pointer;
+  }
+  .toc-group-btn:hover { color: var(--gold-glow); background: rgba(201,162,39,0.08); }
+  .toc-group-btn .chev { font-size: 0.7rem; opacity: 0.7; width: 0.9rem; }
+  .toc-group-btn.is-active { color: var(--gold-glow); }
+  .toc-children { display: none; padding-left: 0.85rem; margin-bottom: 0.25rem; }
+  .toc-group.open .toc-children { display: block; }
+  .work-side a.ch-link {
+    display: block;
+    color: var(--ink-dim);
+    text-decoration: none;
+    font-size: 0.86rem;
+    padding: 0.28rem 0.4rem;
+    border-radius: 3px;
+  }
+  .work-side a.ch-link:hover,
+  .work-side a.ch-link.is-active { color: var(--gold-glow); background: rgba(201,162,39,0.08); }
+
+  .work-main {
+    padding: 1.35rem 1.75rem 4rem;
+    max-width: 42rem;
+  }
+  @media (max-width: 900px) { .work-main { padding: 1rem 1.1rem 3rem; } }
+
+  .work-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--hairline);
+    position: sticky;
+    top: 70px;
+    z-index: 5;
+    background: var(--bg);
+  }
+  .work-toolbar button {
+    font-family: var(--serif-body);
+    font-size: 0.84rem;
+    background: var(--bg-panel);
+    color: var(--ink);
+    border: 1px solid var(--hairline);
+    padding: 0.38rem 0.7rem;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .work-toolbar button:hover,
+  .work-toolbar button.is-on {
+    border-color: var(--gold);
+    color: var(--gold-glow);
+  }
+  .work-toolbar button:disabled {
+    opacity: 0.4; cursor: default; border-color: var(--hairline); color: var(--ink-dim);
+  }
+  .work-toolbar .status {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--ink-dim);
+  }
+  .cite-bar {
+    font-size: 0.82rem;
+    color: var(--ink-dim);
+    margin-bottom: 1.1rem;
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center;
+  }
+  .cite-bar code {
+    font-size: 0.78rem;
+    color: var(--gold-glow);
+    background: rgba(201,162,39,0.08);
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+  }
+  .cite-bar button {
+    font-family: var(--serif-body);
+    font-size: 0.78rem;
+    background: transparent;
+    border: 1px solid var(--hairline);
+    color: var(--ink-dim);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .cite-bar button:hover { color: var(--gold-glow); border-color: var(--gold); }
+
+  .work-meta .eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold-glow);
+  }
+  .work-meta h1 {
+    font-size: 1.65rem;
+    margin: 0.25rem 0 0.35rem;
+    line-height: 1.25;
+  }
+  .work-meta .sub {
+    color: var(--ink-dim);
+    font-size: 0.92rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 1.75rem 0 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--hairline);
+  }
+  .section-nav button {
+    font-family: var(--serif-body);
+    font-size: 0.88rem;
+    background: var(--bg-panel);
+    color: var(--ink);
+    border: 1px solid var(--hairline);
+    padding: 0.55rem 0.9rem;
+    border-radius: 3px;
+    cursor: pointer;
+    max-width: 48%;
+  }
+  .section-nav button:hover:not(:disabled) {
+    border-color: var(--gold); color: var(--gold-glow);
+  }
+  .section-nav button:disabled { opacity: 0.35; cursor: default; }
+  .section-nav .label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--ink-dim);
+    margin-bottom: 0.15rem;
+  }
+
+  .chapter-block {
+    margin-bottom: 1.5rem;
+    scroll-margin-top: 140px;
+  }
+  .chapter-block h2 {
+    font-size: 1.2rem;
+    margin: 0 0 1rem;
+    color: var(--gold-glow);
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 0.45rem;
+    scroll-margin-top: 140px;
+  }
+  .chapter-block p {
+    margin: 0 0 1rem;
+    line-height: 1.8;
+    color: var(--ink);
+    font-size: 1.05rem;
+    scroll-margin-top: 140px;
+  }
+  .chapter-block p.hl-selectable { cursor: text; }
+  .chapter-block p.is-target {
+    background: rgba(201,162,39,0.14);
+    box-shadow: -3px 0 0 var(--gold);
+    padding: 0.35rem 0.5rem;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    border-radius: 3px;
+    transition: background 1.2s ease;
+  }
+  .chapter-block p.is-target.fade {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  mark.user-hl {
+    background: rgba(201,162,39,0.28);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 0.05em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .bookmark-marker {
+    display: inline-block;
+    width: 0; height: 0;
+    position: relative;
+  }
+  .bookmark-marker::before {
+    content: '§';
+    position: absolute;
+    left: -1.15rem;
+    top: 0;
+    font-size: 0.95rem;
+    color: var(--gold-glow);
+    opacity: 0.95;
+  }
+
+  .hl-popup {
+    position: fixed;
+    z-index: 100;
+    display: none;
+    gap: 0.35rem;
+    padding: 0.35rem;
+    background: var(--bg-panel);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .hl-popup.is-visible { display: flex; }
+  .hl-popup button {
+    font-family: var(--serif-body);
+    font-size: 0.82rem;
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--hairline);
+    padding: 0.35rem 0.6rem;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .hl-popup button:hover { border-color: var(--gold); color: var(--gold-glow); }
+
+  .source-footer {
+    margin-top: 2rem;
+    padding-top: 1.1rem;
+    border-top: 1px dashed var(--hairline);
+    font-size: 0.85rem;
+    color: var(--ink-dim);
+    line-height: 1.55;
+  }
+  .missing { color: var(--ink-dim); padding: 2rem 0; }
+  .tools-note { font-size: 0.8rem; color: var(--ink-dim); line-height: 1.45; margin: 0.3rem 0 0; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="../index.html" class="wordmark">MELIUS&nbsp;ILLUMINARE</a>
+  <nav>
+    <a href="../figures.html">Figures</a>
+    <a href="../concepts.html">Concepts</a>
+    <a href="../magisterium.html">Magisterium</a>
+    <a href="../spiritualities.html">Spiritualities</a>
+    <a href="../theological-tree.html">Theological Tree</a>
+    <a href="bible.html">Sacred Texts</a>
+    <a href="../about.html">About</a>
+  </nav>
+</header>
+
+<div class="work-app">
+  <aside class="work-side" id="work-side">
+    <h3>Contents</h3>
+    <div id="work-toc"></div>
+    <h3>Reading tools</h3>
+    <p class="tools-note">Bookmarks and highlights stay in this browser. Copy a citation link to share an exact paragraph.</p>
+  </aside>
+
+  <main class="work-main">
+    <div class="work-toolbar">
+      <button type="button" id="btn-side" title="Contents">Contents</button>
+      <button type="button" id="btn-prev" title="Previous section">← Prev</button>
+      <button type="button" id="btn-next" title="Next section">Next →</button>
+      <button type="button" id="btn-bookmark">Bookmark</button>
+      <button type="button" id="btn-goto-bookmark">Go to bookmark</button>
+      <button type="button" id="btn-clear-hl">Clear highlights</button>
+      <span class="status" id="tool-status"></span>
+    </div>
+    <div class="cite-bar" id="cite-bar" hidden>
+      <span>Location: <code id="cite-code"></code></span>
+      <button type="button" id="btn-copy-cite">Copy link</button>
+    </div>
+    <div id="work-root"></div>
+  </main>
+</div>
+
+<div class="hl-popup" id="hl-popup" role="dialog" aria-label="Highlight tools">
+  <button type="button" id="btn-hl">Highlight</button>
+  <button type="button" id="btn-hl-clear-sel">Clear here</button>
+  <button type="button" id="btn-cite-para">Cite paragraph</button>
+</div>
+
+<script src="../js/works.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function qs(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function storageKey(workId, kind) {
+    return 'melius_' + kind + '_' + workId;
+  }
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch (e) { return fallback; }
+  }
+  function saveJSON(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* ignore */ }
+  }
+  function flash(msg) {
+    const el = document.getElementById('tool-status');
+    if (!el) return;
+    el.textContent = msg;
+    clearTimeout(flash._t);
+    flash._t = setTimeout(function () { el.textContent = ''; }, 2800);
+  }
+
+  /** Parse "Book 19 — §3" / "Book XIX, Chapter 4" style headings into groups */
+  function parseHeading(heading, index) {
+    const h = heading || ('Section ' + (index + 1));
+    let m = h.match(/^Book\s+(\d+)\s*[—–\-:]?\s*(.*)$/i);
+    if (m) {
+      return {
+        groupKey: 'book-' + m[1],
+        groupLabel: 'Book ' + m[1],
+        subLabel: (m[2] || '').replace(/^§\s*/, '§').trim() || ('§' + (index + 1)),
+        raw: h
+      };
+    }
+    m = h.match(/^(Book\s+[IVXLC]+)\b\s*[—–\-:]?\s*(.*)$/i);
+    if (m) {
+      return {
+        groupKey: slug(m[1]),
+        groupLabel: m[1],
+        subLabel: (m[2] || '').trim() || ('Part ' + (index + 1)),
+        raw: h
+      };
+    }
+    return { groupKey: 'sec-' + index, groupLabel: h, subLabel: null, raw: h, flat: true };
+  }
+  function slug(s) {
+    return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  let currentWorkId = null;
+  let currentWork = null;
+  let currentSection = 0;
+  let sectionMode = true; // one section at a time for long works
+
+  function shouldUseSectionMode(w) {
+    const n = (w.chapters || []).length;
+    let chars = 0;
+    (w.chapters || []).forEach(function (ch) {
+      (ch.paragraphs || []).forEach(function (p) { chars += p.length; });
+    });
+    return n > 12 || chars > 80000;
+  }
+
+  function buildToc(w) {
+    const tocEl = document.getElementById('work-toc');
+    const chapters = w.chapters || [];
+    const groups = [];
+    const groupMap = {};
+
+    chapters.forEach(function (ch, i) {
+      const info = parseHeading(ch.heading, i);
+      if (info.flat) {
+        groups.push({ type: 'flat', index: i, label: info.raw });
+        return;
+      }
+      if (!groupMap[info.groupKey]) {
+        groupMap[info.groupKey] = {
+          type: 'group',
+          key: info.groupKey,
+          label: info.groupLabel,
+          items: []
+        };
+        groups.push(groupMap[info.groupKey]);
+      }
+      groupMap[info.groupKey].items.push({
+        index: i,
+        label: info.subLabel || info.raw
+      });
+    });
+
+    let html = '';
+    groups.forEach(function (g) {
+      if (g.type === 'flat') {
+        html += '<a class="ch-link" href="#s' + g.index + '" data-ch="' + g.index + '">' +
+          escapeHtml(g.label) + '</a>';
+        return;
+      }
+      const openCls = g.items.some(function (it) { return it.index === currentSection; }) ? ' open' : '';
+      html += '<div class="toc-group' + openCls + '" data-group="' + escapeHtml(g.key) + '">';
+      html += '<button type="button" class="toc-group-btn" data-group-btn="' + escapeHtml(g.key) + '">';
+      html += '<span class="chev">' + (openCls ? '▾' : '▸') + '</span>';
+      html += '<span>' + escapeHtml(g.label) + '</span></button>';
+      html += '<div class="toc-children">';
+      g.items.forEach(function (it) {
+        const active = it.index === currentSection ? ' is-active' : '';
+        html += '<a class="ch-link' + active + '" href="#s' + it.index + '" data-ch="' + it.index + '">' +
+          escapeHtml(it.label) + '</a>';
+      });
+      html += '</div></div>';
+    });
+    tocEl.innerHTML = html || '<span style="color:var(--ink-dim);font-size:0.85rem">No sections</span>';
+
+    tocEl.querySelectorAll('[data-group-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const parent = btn.closest('.toc-group');
+        parent.classList.toggle('open');
+        const chev = btn.querySelector('.chev');
+        if (chev) chev.textContent = parent.classList.contains('open') ? '▾' : '▸';
+      });
+    });
+    tocEl.querySelectorAll('.ch-link').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        goToSection(parseInt(a.getAttribute('data-ch'), 10), null, true);
+        document.getElementById('work-side').classList.remove('open');
+      });
+    });
+  }
+
+  function paraId(si, pi) {
+    return 's' + si + '-p' + pi;
+  }
+
+  function updateCiteBar(si, pi) {
+    const bar = document.getElementById('cite-bar');
+    const code = document.getElementById('cite-code');
+    if (!currentWork) { bar.hidden = true; return; }
+    const ch = (currentWork.chapters || [])[si];
+    if (!ch) { bar.hidden = true; return; }
+    const label = (ch.heading || ('Section ' + (si + 1))) +
+      (pi != null ? ' · ¶' + (pi + 1) : '');
+    code.textContent = label;
+    bar.hidden = false;
+    bar.dataset.section = String(si);
+    bar.dataset.para = pi != null ? String(pi) : '';
+  }
+
+  function renderSection() {
+    const root = document.getElementById('work-root');
+    const w = currentWork;
+    if (!w) return;
+
+    const chapters = w.chapters || [];
+    if (!chapters.length) {
+      root.innerHTML = '<p class="missing">This work has no text sections yet.</p>';
+      return;
+    }
+    if (currentSection < 0) currentSection = 0;
+    if (currentSection >= chapters.length) currentSection = chapters.length - 1;
+
+    const ch = chapters[currentSection];
+    let body = '';
+    body += '<div class="work-meta">';
+    body += '<span class="eyebrow">' + escapeHtml(w.author || '') + '</span>';
+    body += '<h1>' + escapeHtml(w.title) + '</h1>';
+    body += '<div class="sub">' + escapeHtml(w.translation || 'Public domain translation');
+    if (sectionMode) {
+      body += ' · Section ' + (currentSection + 1) + ' of ' + chapters.length;
+    }
+    body += '</div></div>';
+
+    if (sectionMode) {
+      body += '<section class="chapter-block" id="s' + currentSection + '">';
+      if (ch.heading) body += '<h2 id="s' + currentSection + '-h">' + escapeHtml(ch.heading) + '</h2>';
+      (ch.paragraphs || []).forEach(function (para, pi) {
+        body += '<p class="hl-selectable" data-ch="' + currentSection + '" data-p="' + pi +
+          '" id="' + paraId(currentSection, pi) + '">' + escapeHtml(para) + '</p>';
+      });
+      body += '</section>';
+
+      const prevLabel = currentSection > 0
+        ? (chapters[currentSection - 1].heading || ('Section ' + currentSection))
+        : '';
+      const nextLabel = currentSection < chapters.length - 1
+        ? (chapters[currentSection + 1].heading || ('Section ' + (currentSection + 2)))
+        : '';
+      body += '<div class="section-nav">';
+      body += '<button type="button" id="nav-prev"' + (currentSection <= 0 ? ' disabled' : '') + '>';
+      body += '<span class="label">Previous</span>' + escapeHtml(prevLabel || '—') + '</button>';
+      body += '<button type="button" id="nav-next"' + (currentSection >= chapters.length - 1 ? ' disabled' : '') + '>';
+      body += '<span class="label">Next</span>' + escapeHtml(nextLabel || '—') + '</button>';
+      body += '</div>';
+    } else {
+      chapters.forEach(function (c, i) {
+        body += '<section class="chapter-block" id="s' + i + '">';
+        if (c.heading) body += '<h2 id="s' + i + '-h">' + escapeHtml(c.heading) + '</h2>';
+        (c.paragraphs || []).forEach(function (para, pi) {
+          body += '<p class="hl-selectable" data-ch="' + i + '" data-p="' + pi +
+            '" id="' + paraId(i, pi) + '">' + escapeHtml(para) + '</p>';
+        });
+        body += '</section>';
+      });
+    }
+
+    body += '<p class="source-footer">';
+    body += escapeHtml(w.note || 'This text is in the public domain and is hosted on Melius Illuminare for reading without leaving the site.');
+    body += ' · Stable links use <code>#sN</code> (section) and <code>#sN-pM</code> (paragraph).';
+    body += ' · <a href="../figures.html">Figures</a>';
+    body += '</p>';
+
+    root.innerHTML = body;
+
+    document.getElementById('btn-prev').disabled = currentSection <= 0;
+    document.getElementById('btn-next').disabled = currentSection >= chapters.length - 1;
+
+    const navPrev = document.getElementById('nav-prev');
+    const navNext = document.getElementById('nav-next');
+    if (navPrev) navPrev.addEventListener('click', function () { goToSection(currentSection - 1, null, true); });
+    if (navNext) navNext.addEventListener('click', function () { goToSection(currentSection + 1, null, true); });
+
+    buildToc(w);
+    updateCiteBar(currentSection, null);
+    applyHighlights(currentWorkId);
+    applyBookmarkMarker(currentWorkId);
+
+    // Paragraph click updates citation
+    root.querySelectorAll('p.hl-selectable').forEach(function (p) {
+      p.addEventListener('click', function () {
+        const si = parseInt(p.getAttribute('data-ch'), 10);
+        const pi = parseInt(p.getAttribute('data-p'), 10);
+        updateCiteBar(si, pi);
+      });
+    });
+  }
+
+  function goToSection(si, paraIndex, pushHash) {
+    if (!currentWork) return;
+    const n = (currentWork.chapters || []).length;
+    if (si < 0 || si >= n) return;
+    currentSection = si;
+    renderSection();
+    if (pushHash) {
+      const hash = paraIndex != null ? paraId(si, paraIndex) : ('s' + si);
+      if (history.replaceState) {
+        history.replaceState(null, '', '#' + hash);
+      } else {
+        location.hash = hash;
+      }
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (paraIndex != null) {
+      setTimeout(function () { highlightTarget(paraId(si, paraIndex)); }, 50);
+    }
+  }
+
+  function highlightTarget(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('is-target');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function () { el.classList.add('fade'); }, 2200);
+    setTimeout(function () { el.classList.remove('is-target', 'fade'); }, 4000);
+    const m = id.match(/^s(\d+)(?:-p(\d+))?$/);
+    if (m) {
+      updateCiteBar(parseInt(m[1], 10), m[2] != null ? parseInt(m[2], 10) : null);
+    }
+  }
+
+  function parseHash() {
+    const hash = (window.location.hash || '').replace(/^#/, '');
+    if (!hash) return null;
+    // s12-p3 or s12 or legacy ch-12 / p-12-3
+    let m = hash.match(/^s(\d+)(?:-p(\d+))?$/);
+    if (m) return { section: parseInt(m[1], 10), para: m[2] != null ? parseInt(m[2], 10) : null };
+    m = hash.match(/^ch-(\d+)$/);
+    if (m) return { section: parseInt(m[1], 10), para: null };
+    m = hash.match(/^p-(\d+)-(\d+)$/);
+    if (m) return { section: parseInt(m[1], 10), para: parseInt(m[2], 10) };
+    return null;
+  }
+
+  function applyHighlights(workId) {
+    const map = loadJSON(storageKey(workId, 'hl'), {});
+    Object.keys(map).forEach(function (pid) {
+      const el = document.getElementById(pid);
+      if (!el || el.querySelector('mark.user-hl')) return;
+      const ranges = map[pid];
+      if (!ranges || !ranges.length) return;
+      // Simple: wrap whole paragraph if stored as full
+      const text = el.textContent;
+      el.innerHTML = '';
+      let cursor = 0;
+      ranges.slice().sort(function (a, b) { return a.start - b.start; }).forEach(function (r) {
+        const start = Math.max(0, r.start);
+        const end = Math.min(text.length, r.end);
+        if (start > cursor) el.appendChild(document.createTextNode(text.slice(cursor, start)));
+        const mark = document.createElement('mark');
+        mark.className = 'user-hl';
+        mark.textContent = text.slice(start, end);
+        el.appendChild(mark);
+        cursor = end;
+      });
+      if (cursor < text.length) el.appendChild(document.createTextNode(text.slice(cursor)));
+    });
+  }
+
+  function saveHighlightFromSelection() {
+    if (!currentWorkId) return;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const node = sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement);
+    const p = node && node.closest && node.closest('p.hl-selectable');
+    if (!p) return;
+    const full = p.textContent;
+    const range = sel.getRangeAt(0);
+    // Approximate offsets within paragraph
+    const pre = range.cloneRange();
+    pre.selectNodeContents(p);
+    pre.setEnd(range.startContainer, range.startOffset);
+    const start = pre.toString().length;
+    const end = start + range.toString().length;
+    if (end <= start) return;
+    const map = loadJSON(storageKey(currentWorkId, 'hl'), {});
+    if (!map[p.id]) map[p.id] = [];
+    map[p.id].push({ start: start, end: end });
+    saveJSON(storageKey(currentWorkId, 'hl'), map);
+    applyHighlights(currentWorkId);
+    hidePopup();
+    flash('Highlighted');
+  }
+
+  function clearHighlightsInWork() {
+    if (!currentWorkId) return;
+    saveJSON(storageKey(currentWorkId, 'hl'), {});
+    renderSection();
+    flash('Highlights cleared');
+  }
+
+  function saveBookmark() {
+    if (!currentWorkId) return;
+    const bm = {
+      section: currentSection,
+      para: null,
+      scroll: window.scrollY,
+      at: Date.now()
+    };
+    // Prefer first visible paragraph
+    const paras = document.querySelectorAll('p.hl-selectable');
+    for (let i = 0; i < paras.length; i++) {
+      const r = paras[i].getBoundingClientRect();
+      if (r.top >= 80 && r.top < window.innerHeight * 0.55) {
+        bm.para = parseInt(paras[i].getAttribute('data-p'), 10);
+        break;
+      }
+    }
+    saveJSON(storageKey(currentWorkId, 'bm'), bm);
+    applyBookmarkMarker(currentWorkId);
+    flash('Bookmark saved');
+  }
+
+  function restoreBookmark(workId, silent) {
+    const bm = loadJSON(storageKey(workId, 'bm'), null);
+    if (!bm) {
+      if (!silent) flash('No bookmark yet');
+      return;
+    }
+    goToSection(bm.section || 0, bm.para != null ? bm.para : null, true);
+    if (!silent) flash('Returned to bookmark');
+  }
+
+  function applyBookmarkMarker(workId) {
+    document.querySelectorAll('.bookmark-marker').forEach(function (m) { m.remove(); });
+    const bm = loadJSON(storageKey(workId, 'bm'), null);
+    if (!bm || bm.section !== currentSection) return;
+    let el;
+    if (bm.para != null) el = document.getElementById(paraId(bm.section, bm.para));
+    if (!el) el = document.getElementById('s' + bm.section);
+    if (!el) return;
+    const mark = document.createElement('span');
+    mark.className = 'bookmark-marker';
+    mark.title = 'Your bookmark';
+    if (el.tagName === 'P') el.insertBefore(mark, el.firstChild);
+    else el.insertBefore(mark, el.firstChild);
+  }
+
+  function citationUrl(si, pi) {
+    const base = location.href.split('#')[0];
+    const hash = pi != null ? paraId(si, pi) : ('s' + si);
+    return base + '#' + hash;
+  }
+
+  function copyCite() {
+    const bar = document.getElementById('cite-bar');
+    const si = parseInt(bar.dataset.section || currentSection, 10);
+    const pi = bar.dataset.para !== '' && bar.dataset.para != null
+      ? parseInt(bar.dataset.para, 10) : null;
+    const url = citationUrl(si, pi);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { flash('Citation link copied'); });
+    } else {
+      flash(url);
+    }
+  }
+
+  /* ---------- Selection popup ---------- */
+  const popup = document.getElementById('hl-popup');
+  function hidePopup() { popup.classList.remove('is-visible'); }
+  function showPopupNearSelection() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) { hidePopup(); return; }
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    if (!rect || (rect.width === 0 && rect.height === 0)) { hidePopup(); return; }
+    popup.style.left = Math.min(window.innerWidth - 200, Math.max(8, rect.left + rect.width / 2 - 90)) + 'px';
+    popup.style.top = Math.max(8, rect.top - 44) + 'px';
+    popup.classList.add('is-visible');
+  }
+  document.addEventListener('mouseup', function () { setTimeout(showPopupNearSelection, 10); });
+  document.addEventListener('scroll', hidePopup, true);
+  document.getElementById('btn-hl').addEventListener('click', saveHighlightFromSelection);
+  document.getElementById('btn-hl-clear-sel').addEventListener('click', function () {
+    const sel = window.getSelection();
+    if (!sel || !currentWorkId) return;
+    const node = sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement);
+    const p = node && node.closest && node.closest('p.hl-selectable');
+    if (!p) return;
+    const map = loadJSON(storageKey(currentWorkId, 'hl'), {});
+    delete map[p.id];
+    saveJSON(storageKey(currentWorkId, 'hl'), map);
+    p.textContent = p.textContent;
+    hidePopup();
+    flash('Marks cleared in paragraph');
+  });
+  document.getElementById('btn-cite-para').addEventListener('click', function () {
+    const sel = window.getSelection();
+    const node = sel && sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement);
+    const p = node && node.closest && node.closest('p.hl-selectable');
+    if (!p) return;
+    const si = parseInt(p.getAttribute('data-ch'), 10);
+    const pi = parseInt(p.getAttribute('data-p'), 10);
+    updateCiteBar(si, pi);
+    const url = citationUrl(si, pi);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { flash('Paragraph link copied'); });
+    }
+    hidePopup();
+  });
+
+  document.getElementById('btn-bookmark').addEventListener('click', saveBookmark);
+  document.getElementById('btn-goto-bookmark').addEventListener('click', function () {
+    restoreBookmark(currentWorkId, false);
+  });
+  document.getElementById('btn-clear-hl').addEventListener('click', function () {
+    if (confirm('Clear all highlights in this work?')) clearHighlightsInWork();
+  });
+  document.getElementById('btn-side').addEventListener('click', function () {
+    document.getElementById('work-side').classList.toggle('open');
+  });
+  document.getElementById('btn-prev').addEventListener('click', function () {
+    goToSection(currentSection - 1, null, true);
+  });
+  document.getElementById('btn-next').addEventListener('click', function () {
+    goToSection(currentSection + 1, null, true);
+  });
+  document.getElementById('btn-copy-cite').addEventListener('click', copyCite);
+
+  function render() {
+    const id = qs('id');
+    const root = document.getElementById('work-root');
+    currentWorkId = id;
+
+    if (!id || !window.WORKS || !window.WORKS[id]) {
+      const available = window.WORKS
+        ? Object.keys(window.WORKS).slice(0, 12).join(', ') + '…'
+        : '(works failed to load)';
+      root.innerHTML =
+        '<div class="missing"><h1>Work not found</h1><p>No text is loaded for <code>' +
+        escapeHtml(id || '') + '</code>.</p><p>Available keys include: ' + escapeHtml(available) +
+        '</p><p><a href="../figures.html">Back to Figures</a></p></div>';
+      document.getElementById('work-toc').innerHTML = '';
+      document.getElementById('cite-bar').hidden = true;
+      document.title = 'Work not found — Melius Illuminare';
+      return;
+    }
+
+    currentWork = window.WORKS[id];
+    document.title = (currentWork.title || id) + ' — Melius Illuminare';
+    sectionMode = shouldUseSectionMode(currentWork);
+
+    const params = new URLSearchParams(window.location.search);
+    const hashInfo = parseHash();
+
+    if (params.get('resume') === '1') {
+      const bm = loadJSON(storageKey(id, 'bm'), null);
+      currentSection = bm && bm.section != null ? bm.section : 0;
+      renderSection();
+      if (bm && bm.para != null) setTimeout(function () {
+        highlightTarget(paraId(bm.section, bm.para));
+      }, 60);
+      return;
+    }
+
+    if (hashInfo) {
+      currentSection = hashInfo.section || 0;
+      renderSection();
+      if (hashInfo.para != null) {
+        setTimeout(function () { highlightTarget(paraId(hashInfo.section, hashInfo.para)); }, 60);
+      } else {
+        setTimeout(function () {
+          const el = document.getElementById('s' + hashInfo.section);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 40);
+      }
+      return;
+    }
+
+    currentSection = 0;
+    renderSection();
+  }
+
+  window.addEventListener('hashchange', function () {
+    const info = parseHash();
+    if (!info || !currentWork) return;
+    if (info.section !== currentSection) {
+      goToSection(info.section, info.para, false);
+    } else if (info.para != null) {
+      highlightTarget(paraId(info.section, info.para));
+    }
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
+})();
+</script>
+</body>
+</html>

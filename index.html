@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Melius Illuminare &mdash; A Theology Through the Ages</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="wordmark">MELIUS&nbsp;ILLUMINARE</a>
+  <nav>
+    <a href="figures.html">Figures</a>
+    <a href="concepts.html">Concepts</a>
+      <a href="magisterium.html">Magisterium</a>
+    <a href="spiritualities.html">Spiritualities</a>
+    <a href="theological-tree.html">Theological Tree</a>
+    <a href="texts/bible.html">Sacred Texts</a>
+    <a href="about.html">About</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-art" id="hero-art" aria-hidden="true">
+    <!-- Public-domain Baroque / Catholic art; crossfades via CSS + JS -->
+  </div>
+  <div class="hero-art-veil" aria-hidden="true"></div>
+  <div class="god-rays" aria-hidden="true"></div>
+  <div class="motes" aria-hidden="true"></div>
+  <div class="hero-content">
+    <span class="eyebrow">Catholic Theology &middot; Fathers &middot; Doctors</span>
+    <h1>Faith Seeking Understanding</h1>
+    <p class="lede">A cinematic archive of the Church Fathers as received by Catholicism, the Doctors of the Church, the Scholastics, and the great schools of Catholic spiritual formation — told through their own words wherever the public domain allows it.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="figures.html">Browse the Figures</a>
+      <a class="btn btn-ghost" href="texts/bible.html">Sacred Texts</a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <span class="eyebrow">One Tradition, Deep Lineage</span>
+    <h2>Fathers, Doctors, and Catholic schools</h2>
+    <p>Figures of the undivided Church are marked in bronze; later Catholic Doctors, Scholastics, and mystics in gold. The encyclopedia presents both as belonging to the one Catholic tradition received and taught by the Church.</p>
+  </div>
+  <div class="tradition-grid">
+    <div class="tradition-card" style="--card-color:#a97142">
+      <h3 style="color:#e6b988">Early Church</h3>
+      <p>From the Apostolic Fathers through the great Councils — Athanasius, the Cappadocians, Augustine, Maximus — read as the common patrimony of Catholicism.</p>
+    </div>
+    <div class="tradition-card" style="--card-color:#c9a227">
+      <h3 style="color:#ffd98e">Catholic Doctors &amp; Schools</h3>
+      <p>From Anselm and Aquinas to Teresa, John of the Cross, and Newman — the Scholastic, mystical, and magisterial tradition of the Latin Church.</p>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="spiritualities-teaser">
+  <div class="section-head">
+    <span class="eyebrow">Practice</span>
+    <h2>Spiritual Traditions</h2>
+    <p>Seven schools of Catholic formation — Augustinian, Benedictine, Franciscan, Carmelite, Jesuit, Dominican, and Desert — taught as paths you can walk, not only read about.</p>
+  </div>
+  <div class="cta-row" style="justify-content:center">
+    <a class="btn btn-primary" href="spiritualities.html">Enter the school of formation</a>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <p>All portraits and artwork are drawn from verifiable public-domain sources (Wikimedia Commons, the Web Gallery of Art, and the Internet Archive). No image on this site is AI-generated. See the <a href="about.html">sourcing &amp; editorial policy</a> for details.</p>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+(function () {
+  // Public-domain Baroque / Catholic sacred art (Wikimedia Commons)
+  var ART = [
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Caravaggio_-_The_Incredulity_of_Saint_Thomas.jpg", title: "Caravaggio — The Incredulity of Saint Thomas" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Caravaggio_%E2%80%94_The_Calling_of_Saint_Matthew.jpg", title: "Caravaggio — The Calling of Saint Matthew" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Michelangelo_Caravaggio_040.jpg", title: "Caravaggio — The Calling of Saint Matthew" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Elevation_of_the_Cross_(Rubens)_July_2015-1a.jpg", title: "Rubens — Elevation of the Cross" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Faithful_copy_of_The_Archangel_Michael_defeating_Satan_by_Guido_Reni.jpg", title: "Guido Reni (copy) — Archangel Michael" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Caravaggio_-_Madonna_di_Loreto.jpg", title: "Caravaggio — Madonna di Loreto" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Entombment_of_Christ-Caravaggio_(c.1602-3).jpg", title: "Caravaggio — Entombment of Christ" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Assumption_of_the_Virgin_Mary_-_Rubens.jpg", title: "Rubens — Assumption of the Virgin" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Bartolomé_Esteban_Murillo_011.jpg", title: "Murillo — Immaculate Conception" },
+    { src: "https://commons.wikimedia.org/wiki/Special:FilePath/Ecstasy_of_Saint_Teresa_September_2015-2a.jpg", title: "Bernini — Ecstasy of Saint Teresa" }
+  ];
+  var root = document.getElementById("hero-art");
+  if (!root || !ART.length) return;
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  ART.forEach(function (item, i) {
+    var d = document.createElement("div");
+    d.className = "hero-art-slide" + (i === 0 ? " is-active" : "");
+    d.style.backgroundImage = 'url("' + item.src + '")';
+    d.title = item.title;
+    root.appendChild(d);
+  });
+  if (reduced || ART.length < 2) return;
+  var i = 0;
+  setInterval(function () {
+    var slides = root.querySelectorAll(".hero-art-slide");
+    slides[i].classList.remove("is-active");
+    i = (i + 1) % slides.length;
+    slides[i].classList.add("is-active");
+  }, 7000);
+})();
+</script>
+</body>
+</html>
